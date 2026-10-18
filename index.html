@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>热乎の新番</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<style>
+  :root{
+    --bg:#111;
+    --card-bg:#1a1a1a;
+    --text:#fff;
+    --text-2:#aaa;
+    --border:#262626;
+    --primary:#e50914;
+  }
+  .light-theme{
+    --bg:#f5f5f5;
+    --card-bg:#ffffff;
+    --text:#111;
+    --text-2:#555;
+    --border:#ddd;
+    --primary:#e50914;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    min-width: 1024px;
+    transition: background 0.3s, color 0.3s;
+  }
+  /* 顶部导航 */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #000;
+    border-bottom: 1px solid #222;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .light-theme .navbar{
+    background:#fff;
+    border-bottom:1px solid #ddd;
+  }
+  .navbar .logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--primary);
+  }
+  .navbar .nav-menu {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+  .navbar .nav-menu a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+  .navbar .nav-menu a:hover {
+    opacity: 1;
+  }
+  .nav-feedback{
+    color: var(--primary) !important;
+  }
+  .nav‑feedback:active{
+    opacity:0.7;
+  }
+  .nav-right{
+    display:flex;
+    gap:16px;
+    align-items:center;
+  }
+  #themeBtn{
+    padding:4px 10px;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: #222;
+    border-radius: 20px;
+    padding: 6px 14px;
+  }
+  .light-theme .search-box{
+    background:#eee;
+  }
+  .search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    width: 180px;
+  }
+  /* 主推荐横幅 */
+  .hero {
+    position: relative;
+    height: 420px;
+    background: linear-gradient(to right, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.4) 70%),
+    url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    padding: 0 48px;
+    margin-bottom: 30px;
+  }
+  .hero-content h1 {
+    font-size: 42px;
+    margin-bottom: 12px;
+  }
+  .hero-content p {
+    font-size: 16px;
+    opacity: 0.85;
+    margin-bottom: 20px;
+    max-width: 560px;
+  }
+  .btn-play {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .btn-play:hover {
+    background: #f6121d;
+  }
+  .section {
+    padding: 0 48px 40px;
+  }
+  .section-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-title a{
+    color:var(--text-2);
+    text-decoration:none;
+    font-size:14px;
+  }
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 18px;
+  }
+  .video-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    overflow: visible !important;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid var(--border);
+    position:relative;
+  }
+  .video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.25);
+  }
+  .video-card .cover {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: #222 center/cover no-repeat;
+    position: relative;
+  }
+  .video-card .cover .tag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #f7b500;
+    color: #000;
+    font-weight:bold;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .video-card .info {
+    padding: 10px;
+  }
+  .video-card .title {
+    font-size: 14px;
+    margin-bottom: 4px;
+    line-height: 1.4;
+    height: 40px;
+    overflow: hidden;
+  }
+  .video-card .meta {
+    font-size: 12px;
+    color: var(--text-2);
+  }
+  .no-result{
+    padding:40px;
+    text-align:center;
+    color:var(--text-2);
+    font-size:18px;
+    grid-column: 1 / -1;
+  }
+  .preview-tip{
+    position:absolute;
+    left:105%;
+    top:0;
+    width:280px;
+    height:158px;
+    border-radius:8px;
+    background:#222 center/cover no-repeat;
+    box-shadow:0 10px 30px #0008;
+    z-index:99;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease;
+  }
+  .video-card:hover .preview-tip{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .detail-modal{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.85);
+    z-index:200;
+    display:none;
+    padding:40px;
+    overflow:auto;
+  }
+  .detail-modal.show{
+    display:block;
+  }
+  .detail-wrap{
+    max-width:1300px;
+    margin:0 auto;
+    background:var(--card-bg);
+    border-radius:12px;
+    padding:24px;
+    position:relative;
+  }
+  .detail-close{
+    position:absolute;
+    top:16px;right:16px;
+    font-size:24px;
+    background:none;border:none;color:var(--text);
+    cursor:pointer;
+  }
+  .detail-body{
+    display:grid;
+    grid-template-columns: 1fr 340px;
+    gap:24px;
+  }
+  .player-wrap video {
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+  }
+  .sidebar-panel{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .line-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  #lineSelect{
+    padding:6px 10px;border-radius:6px;
+  }
+  .ep-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+    gap:10px;
+    max-height:550px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  .ep-item{
+    padding:8px;border-radius:6px;background:#333;color:#fff;text-align:center;cursor:pointer;
+  }
+  .ep-item.active{
+    background:var(--primary);
+    color:#fff;
+  }
+  .light-theme .ep-item{
+    background:#eee;color:#111;
+  }
+  .light-theme .ep-item.active{
+    background:var(--primary);
+    color:#ffffff;
+  }
+  /*====分页样式====*/
+  .page-wrap{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:center;
+    margin-top:30px;
+  }
+  .page-btn{
+    padding:8px 16px;
+    background:#272727;
+    border:none;
+    color:#fff;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .page-btn:disabled{
+    opacity:0.35;
+    cursor:not-allowed;
+  }
+  @media (max-width: 1400px) {
+    .video-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+  @media (max-width: 1200px) {
+    .video-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  @media (max-width: 992px) {
+    .detail-body{
+      grid-template-columns:1fr;
+    }
+  }
+  @media (max-width: 768px) {
+    .video-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .hero {
+      height: 280px;
+      padding: 0 24px;
+    }
+    .hero-content h1 {
+      font-size: 28px;
+    }
+    .preview-tip{
+      display:none;
+    }
+  }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="logo">热乎の新番</div>
+  <ul class="nav-menu">
+    <li><a href="#">首页</a></li>
+    <li><a href="#">新番</a></li>
+    <li><a href="#">动画</a></li>
+    <li><a href="#">电影</a></li>
+    <li><a href="#" class="nav-feedback" onclick="openFeedbackNotice(event)">反馈</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜索番剧..." />
+    </div>
+    <button id="themeBtn">🌓 切换主题</button>
+  </div>
+</nav>
+<section class="hero">
+  <div class="hero-content">
+    <h1>热门推荐</h1>
+    <p>精选视频合集，高清播放，持续更新。点击播放按钮即可开始观看。</p>
+    <button class="btn-play" onclick="openDetail(0)">立即播放</button>
+  </div>
+</section>
+<section class="section">
+  <h2 class="section-title">最近更新的当季番剧 <a href="#">查看更多 ></a></h2>
+  <div class="video-grid" id="videoGrid"></div>
+  <!--分页按钮HTML-->
+  <div class="page-wrap">
+    <button class="page-btn" id="prevBtn">上一页</button>
+    <span id="pageInfo"></span>
+    <button class="page-btn" id="nextBtn">下一页</button>
+  </div>
+</section>
+
+<div class="detail-modal" id="detailModal">
+  <div class="detail-wrap">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div class="detail-body">
+      <div class="player-wrap">
+        <video id="videoPlayer" controls></video>
+      </div>
+      <div class="sidebar-panel">
+        <div class="line-row">
+          <span>选择线路：</span>
+          <select id="lineSelect"></select>
+        </div>
+        <h3 id="detailTitle"></h3>
+        <div id="detailMeta" style="color:var(--text-2);"></div>
+        <div class="ep-list" id="epList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =========【修改你的接口域名+token】=========
+const API_BASE = "https://你的serv00域名/api.php?token=MySecret123456";
+// ==========================================
+
+const grid = document.getElementById("videoGrid");
+const detailModal = document.getElementById("detailModal");
+const videoPlayer = document.getElementById("videoPlayer");
+const searchInput = document.getElementById("searchInput");
+const themeBtn = document.getElementById("themeBtn");
+const lineSelect = document.getElementById("lineSelect");
+const detailTitle = document.getElementById("detailTitle");
+const detailMeta = document.getElementById("detailMeta");
+const epList = document.getElementById("epList");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const pageInfo = document.getElementById("pageInfo");
+
+let hls = null;
+let pageDataList = []; // 当前这一页的数据
+let currentPage = 1;
+let totalPage = 1;
+let searchKeyword = "";
+
+let currentAnimeIndex = null;
+let currentEpIndex = null;
+let currentLineIndex = 0;
+
+const FEEDBACK_NOTICE = `欢迎反馈问题！
+资源失效或加载超过10秒请联系作者反馈
+      联系方式
+邮箱video@5204219.xyz
+微信skd4219
+qq：暂不受理`;
+function openFeedbackNotice(e){
+    e.preventDefault();
+    alert(FEEDBACK_NOTICE);
+}
+
+function loadTheme(){
+    const saved = localStorage.getItem("siteTheme");
+    if(saved === "light") document.body.classList.add("light-theme");
+}
+themeBtn.onclick = function(){
+    document.body.classList.toggle("light-theme");
+    const isLight = document.body.classList.contains("light-theme");
+    localStorage.setItem("siteTheme", isLight ? "light":"dark");
+}
+loadTheme();
+
+videoPlayer.addEventListener('keydown', function(e){
+    switch(e.code){
+      case "Space":
+        e.preventDefault();
+        if(videoPlayer.paused) videoPlayer.play(); else videoPlayer.pause();
+        break;
+      case "ArrowLeft": e.preventDefault(); videoPlayer.currentTime -= 10; break;
+      case "ArrowRight": e.preventDefault(); videoPlayer.currentTime += 10; break;
+      case "ArrowUp": e.preventDefault(); videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break;
+      case "ArrowDown": e.preventDefault(); videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1); break;
+      case "KeyM": e.preventDefault(); videoPlayer.muted = !videoPlayer.muted; break;
+    }
+})
+
+// ==========后端请求分页数据==========
+async function loadData(page, kw=""){
+    currentPage = page;
+    searchKeyword = kw;
+    let url = `${API_BASE}&page=${page}`;
+    if(kw){
+        url += `&kw=${encodeURIComponent(kw)}`;
+    }
+    try{
+        const res = await fetch(url);
+        const json = await res.json();
+        if(json.code ===403){
+            grid.innerHTML = `<div class="no-result">Token错误，请检查接口配置</div>`;
+            return;
+        }
+        totalPage = json.totalPage;
+        pageDataList = json.list.map(item=>{
+            return {
+                title: item.title,
+                cover: item.pic,
+                previewThumb:"",
+                tag:"HD",
+                meta: item.desc ? item.desc.substring(0,60)+"…":"暂无简介",
+                year:"",
+                episodes: item.eps.map(ep=>{
+                    return {
+                        name: ep.name,
+                        sources:[{lineName:"线路1",type:"m3u8",src:ep.url,subtitle:""}]
+                    }
+                })
+            }
+        })
+        renderCards();
+        renderPageBtn();
+    }catch(err){
+        console.error(err);
+        grid.innerHTML = `<div class="no-result">数据加载失败，请检查接口</div>`;
+    }
+}
+
+function renderCards() {
+    grid.innerHTML = "";
+    if(pageDataList.length ===0){
+        grid.innerHTML = `<div class="no-result">没有找到匹配的番剧</div>`;
+        return;
+    }
+    pageDataList.forEach((v, index) => {
+      const card = document.createElement("div");
+      card.className = "video-card";
+      const coverBg = v.cover ? `background-image:url('${v.cover}')` : "";
+      const previewBg = v.previewThumb ? `background-image:url('${v.previewThumb}')` : "";
+      card.innerHTML = `
+        <div class="cover" style="${coverBg}">
+          <span class="tag">${v.tag}</span>
+        </div>
+        <div class="info">
+          <div class="title">${v.title}</div>
+          <div class="meta">${v.meta}<br>${v.year}</div>
+        </div>
+        <div class="preview-tip" style="${previewBg}"></div>
+      `;
+      card.onclick = () => openDetail(index);
+      grid.appendChild(card);
+    });
+}
+
+function renderPageBtn(){
+    pageInfo.innerText = `第${currentPage}页 / 共${totalPage}页`;
+    prevBtn.disabled = currentPage <=1;
+    nextBtn.disabled = currentPage >= totalPage;
+}
+
+//上一页
+prevBtn.onclick = ()=>{
+    if(currentPage>1){
+        loadData(currentPage-1, searchKeyword);
+    }
+}
+//下一页
+nextBtn.onclick = ()=>{
+    if(currentPage < totalPage){
+        loadData(currentPage+1, searchKeyword);
+    }
+}
+
+//搜索输入：搜索后重置回到page=1
+searchInput.addEventListener('input',(e)=>{
+    const kw = e.target.value.trim();
+    loadData(1, kw);
+})
+
+function openDetail(idx){
+    currentAnimeIndex = idx;
+    const anime = pageDataList[idx];
+    detailTitle.innerText = anime.title;
+    detailMeta.innerText = `${anime.meta} | ${anime.year}`;
+    epList.innerHTML = "";
+    anime.episodes.forEach((ep, eIdx)=>{
+      const epBtn = document.createElement("div");
+      epBtn.className = "ep-item";
+      epBtn.innerText = ep.name;
+      epBtn.onclick = ()=> playEp(eIdx);
+      epList.appendChild(epBtn);
+    })
+    detailModal.classList.add("show");
+    const savedProgress = localStorage.getItem(`play_${anime.title}`);
+    if(savedProgress){
+      const saved = JSON.parse(savedProgress);
+      currentEpIndex = saved.ep;
+      currentLineIndex = saved.line ?? 0;
+    }else{
+      currentEpIndex = 0;
+      currentLineIndex = 0;
+    }
+    playEp(currentEpIndex);
+}
+
+function renderLineSelect(ep){
+    lineSelect.innerHTML = "";
+    ep.sources.forEach((source, lineIdx)=>{
+      const opt = document.createElement("option");
+      opt.value = lineIdx;
+      opt.innerText = source.lineName;
+      lineSelect.appendChild(opt);
+    })
+    lineSelect.value = currentLineIndex;
+    lineSelect.onchange = function(){
+      currentLineIndex = parseInt(this.value);
+      playCurrentSource();
+    }
+}
+
+function playEp(epIdx){
+    currentEpIndex = epIdx;
+    const anime = pageDataList[currentAnimeIndex];
+    const ep = anime.episodes[epIdx];
+    document.querySelectorAll(".ep-item").forEach((el,i)=>{
+      el.classList.toggle("active", i===epIdx);
+    })
+    renderLineSelect(ep);
+    playCurrentSource();
+}
+function playCurrentSource(){
+    const anime = pageDataList[currentAnimeIndex];
+    const ep = anime.episodes[currentEpIndex];
+    const source = ep.sources[currentLineIndex];
+    playVideo(source.type, source.src, source.subtitle);
+}
+
+function closeDetail(){
+    detailModal.classList.remove("show");
+    videoPlayer.pause();
+    if (hls) { hls.destroy(); hls = null; }
+}
+
+function playVideo(type, url, subUrl){
+    if (hls) { hls.destroy(); hls = null; }
+    videoPlayer.src = "";
+    if (type === "mp4") {
+      videoPlayer.src = url;
+      videoPlayer.load();
+    } else if (type === "m3u8") {
+      if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(videoPlayer);
+      } else if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+        videoPlayer.src = url;
+      }
+    }
+    const anime = pageDataList[currentAnimeIndex];
+    videoPlayer.ontimeupdate = function(){
+      if(!videoPlayer.paused){
+        localStorage.setItem(`play_${anime.title}`, JSON.stringify({
+          ep: currentEpIndex,
+          line: currentLineIndex,
+          time: videoPlayer.currentTime
+        }))
+      }
+    }
+    videoPlayer.onloadedmetadata = function(){
+      const saved = localStorage.getItem(`play_${anime.title}`);
+      if(saved){
+        const data = JSON.parse(saved);
+        if(data.ep === currentEpIndex && data.line === currentLineIndex){
+          videoPlayer.currentTime = data.time;
+        }
+      }
+      videoPlayer.play();
+    }
+}
+
+//初始化加载第1页
+loadData(1,"");
+</script>
+</body>
+</html>
